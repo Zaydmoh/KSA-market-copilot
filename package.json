@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.81",
     "@radix-ui/react-slot": "^1.2.3",
     "@react-pdf/renderer": "^4.3.1",
     "@types/pdf-parse": "^1.1.5",
@@ -18,7 +17,8 @@
     "lucide-react": "^0.552.0",
     "next": "16.0.1",
     "openai": "^6.8.0",
-    "pdf-parse": "^2.4.5",
+    "pdf2json": "^4.0.0",
+    "pdfjs-dist": "^3.4.120",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "tailwind-merge": "^3.3.1",

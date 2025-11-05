@@ -4,6 +4,10 @@ import { buildMISAAnalysisPrompt } from '@/lib/misa-prompt';
 import { analyzeDocument } from '@/lib/openai-client';
 import type { AnalysisResponse } from '@/lib/types';
 
+// Force Node.js runtime to allow PDF parsing without Edge runtime restrictions
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
@@ -100,9 +104,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalysisR
     // Step 1: Extract text from PDF
     console.log('Extracting text from PDF...');
     let documentText: string;
+    let numPages: number;
     try {
-      documentText = await extractTextFromPDF(buffer);
-      console.log(`Extracted ${documentText.length} characters from PDF`);
+      const result = await extractTextFromPDF(buffer);
+      documentText = result.text;
+      numPages = result.numPages;
+      console.log(`Extracted ${documentText.length} characters from ${numPages} page(s)`);
     } catch (error) {
       console.error('PDF extraction error:', error);
       return NextResponse.json(

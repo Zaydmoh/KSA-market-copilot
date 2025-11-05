@@ -1,39 +1,47 @@
+type ExtractResult = { text: string; numPages: number };
+
 /**
- * Extracts text content from a PDF buffer
+ * Extracts text content from a PDF buffer without requiring canvas/DOMMatrix
  * @param buffer - The PDF file as a Buffer
- * @returns The extracted text content from the PDF
+ * @returns Object containing extracted text and page count
  * @throws Error if extraction fails
  */
-export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+export async function extractTextFromPDF(buffer: Buffer): Promise<ExtractResult> {
   try {
-    // Polyfill DOMMatrix for Node.js environment before loading pdf-parse
-    if (typeof globalThis.DOMMatrix === 'undefined') {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const canvas = require('@napi-rs/canvas');
-        globalThis.DOMMatrix = canvas.DOMMatrix;
-      } catch (err) {
-        console.warn('Could not load @napi-rs/canvas for DOMMatrix polyfill:', err);
-      }
-    }
-
     // Use require for CommonJS module in Node.js context
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const pdf = require('pdf-parse');
     
-    // Parse the PDF
-    const data = await pdf(buffer);
+    // Custom page render that extracts text without canvas rendering
+    const options = {
+      max: 0, // Parse all pages
+      // Critical: avoid rendering (no canvas, no DOMMatrix needed)
+      pagerender: async (pageData: any) => {
+        const textContent = await pageData.getTextContent();
+        // pdfjs-dist returns items with 'str' fields
+        const strings = textContent.items.map((item: any) => item.str);
+        return strings.join(' ');
+      },
+      version: 'default',
+    };
+    
+    // Parse the PDF with custom options
+    const data = await pdf(buffer, options);
 
     // Check if any text was extracted
-    if (!data.text || data.text.trim().length === 0) {
+    const text = (data.text || '').trim();
+    if (!text || text.length === 0) {
       throw new Error(
-        'No text could be extracted from the PDF. The document may be image-based or corrupted. ' +
-        'Please ensure the PDF contains selectable text.'
+        'No text could be extracted from the PDF. The document may be image-based (scanned). ' +
+        'Please ensure the PDF contains selectable text or consider using OCR.'
       );
     }
 
-    // Return the extracted text
-    return data.text;
+    // Return the extracted text and page count
+    return {
+      text,
+      numPages: data.numpages ?? 0,
+    };
   } catch (error) {
     // Handle specific PDF parsing errors
     if (error instanceof Error) {

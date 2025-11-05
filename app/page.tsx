@@ -12,32 +12,41 @@ export default function Home() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string>('');
 
   const handleFileSelect = async (file: File) => {
     setIsAnalyzing(true);
     setError(null);
 
     try {
-      // Create FormData to send file
+      // Build form data
       const formData = new FormData();
       formData.append('file', file);
 
-      // Call the analyze API endpoint
-      const response = await fetch('/api/analyze', {
+      // Call our Node route (no DOMMatrix needed)
+      const response = await fetch('/api/extract', {
         method: 'POST',
         body: formData,
       });
 
+      // Handle errors cleanly
+      const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Analysis failed');
+        throw new Error(
+          payload?.error?.message || 'Failed to extract text from PDF'
+        );
       }
 
-      const data = await response.json();
+      // Use the extracted text
+      setExtractedText(payload.text || '');
+
+      // TODO: if your analyze endpoint expects raw text next,
+      // call it here with payload.text (we'll do this in the next step).
+      // await fetch('/api/analyze', { method: 'POST', body: JSON.stringify({ text: payload.text }) })
       
-      // Store analysis result in sessionStorage and navigate to results page
-      sessionStorage.setItem('analysisResult', JSON.stringify(data.data));
-      router.push('/results');
+      // For now, just log success
+      console.log('Text extracted successfully:', payload.text?.length, 'characters');
+      setIsAnalyzing(false);
     } catch (err) {
       console.error('Error analyzing document:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
