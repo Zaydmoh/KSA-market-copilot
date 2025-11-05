@@ -14,6 +14,22 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<string>('');
 
+  const analyzeText = async (text: string, docName: string): Promise<AnalysisResult> => {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, docName }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(payload?.error?.message || 'Analysis failed');
+    }
+    if (!payload.success || !payload.data) {
+      throw new Error('Invalid response from analysis endpoint');
+    }
+    return payload.data;
+  };
+
   const handleFileSelect = async (file: File) => {
     setIsAnalyzing(true);
     setError(null);
@@ -37,16 +53,63 @@ export default function Home() {
         );
       }
 
-      // Use the extracted text
-      setExtractedText(payload.text || '');
-
-      // TODO: if your analyze endpoint expects raw text next,
-      // call it here with payload.text (we'll do this in the next step).
-      // await fetch('/api/analyze', { method: 'POST', body: JSON.stringify({ text: payload.text }) })
+      let text = '';
       
-      // For now, just log success
-      console.log('Text extracted successfully:', payload.text?.length, 'characters');
-      setIsAnalyzing(false);
+      // If immediate response (rare)
+      if (response.status === 200 && payload.text) {
+        text = payload.text;
+      } 
+      // If async processing (202 with hash)
+      else if (response.status === 202 && payload.hash) {
+        const hash = payload.hash;
+        console.log('Processing async, hash:', hash);
+        
+        // Poll for result
+        const maxTries = 30; // 60 seconds max
+        for (let i = 0; i < maxTries; i++) {
+          await new Promise(r => setTimeout(r, 2000)); // Wait 2s between polls
+          
+          const statusRes = await fetch(`/api/extract?hash=${encodeURIComponent(hash)}`);
+          const statusData = await statusRes.json().catch(() => ({}));
+          
+          if (!statusRes.ok) {
+            throw new Error(statusData?.error?.message || 'Failed to retrieve text');
+          }
+          
+          // If still processing, continue polling
+          if (statusRes.status === 202) {
+            console.log('Still processing...', statusData.status);
+            continue;
+          }
+          
+          // If completed, get text
+          if (statusRes.status === 200 && statusData.text) {
+            text = statusData.text;
+            break;
+          }
+        }
+        
+        if (!text) {
+          throw new Error('Timed out waiting for PDF processing');
+        }
+      }
+
+      // Log extraction result
+      console.log('EXTRACT RESULT:', { length: text.length, preview: text.slice(0, 200) });
+
+      // Keep in state
+      setExtractedText(text);
+      
+      // Analyze the extracted text
+      console.log('Starting analysis...');
+      const analysisResult = await analyzeText(text, file.name);
+      console.log('Analysis completed successfully');
+      
+      // Store result in sessionStorage for results page
+      sessionStorage.setItem('analysisResult', JSON.stringify(analysisResult));
+      
+      // Navigate to results page
+      router.push('/results');
     } catch (err) {
       console.error('Error analyzing document:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
