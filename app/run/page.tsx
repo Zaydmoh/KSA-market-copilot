@@ -20,11 +20,11 @@ export default function RunPage() {
   // State
   const [selectedPacks, setSelectedPacks] = useState<Set<PackId>>(new Set());
   const [packInputs, setPackInputs] = useState<Record<string, Record<string, unknown>>>({});
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [_selectedFile, setSelectedFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [_validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   /**
    * Toggle pack selection
@@ -49,24 +49,24 @@ export default function RunPage() {
   };
 
   /**
-   * Update pack input value
+   * Update pack input value (will be used in Task 2.0+ when pack inputs are implemented)
    */
-  const updatePackInput = (packId: string, field: string, value: unknown) => {
-    setPackInputs({
-      ...packInputs,
-      [packId]: {
-        ...(packInputs[packId] || {}),
-        [field]: value,
-      },
-    });
-    // Clear validation error for this field
-    const errorKey = `${packId}.${field}`;
-    if (validationErrors[errorKey]) {
-      const newErrors = { ...validationErrors };
-      delete newErrors[errorKey];
-      setValidationErrors(newErrors);
-    }
-  };
+  // const updatePackInput = (packId: string, field: string, value: unknown) => {
+  //   setPackInputs({
+  //     ...packInputs,
+  //     [packId]: {
+  //       ...(packInputs[packId] || {}),
+  //       [field]: value,
+  //     },
+  //   });
+  //   // Clear validation error for this field
+  //   const errorKey = `${packId}.${field}`;
+  //   if (validationErrors[errorKey]) {
+  //     const newErrors = { ...validationErrors };
+  //     delete newErrors[errorKey];
+  //     setValidationErrors(newErrors);
+  //   }
+  // };
 
   /**
    * Handle file selection and extraction

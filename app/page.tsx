@@ -12,7 +12,7 @@ export default function Home() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [extractedText, setExtractedText] = useState<string>('');
+  const [_extractedText, setExtractedText] = useState<string>('');
 
   const analyzeText = async (text: string, docName: string): Promise<AnalysisResult> => {
     const res = await fetch('/api/analyze', {

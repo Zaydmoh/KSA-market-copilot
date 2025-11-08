@@ -52,7 +52,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         {
           error: 'Invalid analysis result format',
-          details: error instanceof z.ZodError ? error.errors : undefined,
+          details: error instanceof z.ZodError ? error.issues : undefined,
         },
         { status: 400 }
       );
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const filename = `misa-analysis-${timestamp}.pdf`;
 
     // Return the PDF as a binary response
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

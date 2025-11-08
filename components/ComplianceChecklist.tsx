@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { ComplianceItem, ComplianceStatus } from '@/lib/types';
 
 interface ComplianceChecklistProps {
@@ -11,7 +11,7 @@ interface ComplianceChecklistProps {
  * Returns icon and styling based on compliance status
  */
 function getStatusDisplay(status: ComplianceStatus): {
-  icon: JSX.Element;
+  icon: React.ReactElement;
   label: string;
   bgColor: string;
   textColor: string;

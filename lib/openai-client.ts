@@ -45,7 +45,7 @@ const AnalysisResultSchema = z.object({
  * @throws Error if API call fails or response is invalid
  */
 export async function analyzeDocument(
-  documentText: string,
+  _documentText: string,
   systemMessage: string,
   userMessage: string
 ): Promise<AnalysisResult> {
@@ -108,7 +108,7 @@ export async function analyzeDocument(
 
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
-      console.error('Response validation failed:', error.errors);
+      console.error('Response validation failed:', error.issues);
       throw new Error(
         'The AI response did not match the expected format. Please try again.'
       );

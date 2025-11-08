@@ -34,7 +34,7 @@ const analyses = new Map<string, {
  * Returns current status and progress for an analysis run
  */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ analysisId: string }> }
 ) {
   try {
