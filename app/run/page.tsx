@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import FileUpload from '@/components/FileUpload';
 import { PACKS } from '@/lib/packs/registry';
 import { PackId } from '@/lib/packs/types';
+import { AVAILABLE_SECTORS, getSectorName } from '@/lib/packs/nitaqat/calc';
 
 export default function RunPage() {
   const router = useRouter();
@@ -107,8 +108,6 @@ export default function RunPage() {
    * Validate inputs before submission
    */
   const validateInputs = (): boolean => {
-    const errors: Record<string, string> = {};
-
     // Check if at least one pack is selected
     if (selectedPacks.size === 0) {
       setError('Please select at least one compliance pack');
@@ -121,11 +120,23 @@ export default function RunPage() {
       return false;
     }
 
-    // TODO: Validate pack-specific inputs once schemas are implemented
-    // For now, this is a placeholder for Task 2.0+ pack implementations
+    // Validate Nitaqat inputs
+    if (selectedPacks.has('nitaqat')) {
+      const nitaqatInputs = packInputs.nitaqat as { sector?: string; headcount?: number; currentSaudiPct?: number } | undefined;
+      if (!nitaqatInputs?.headcount || nitaqatInputs.headcount < 1) {
+        setError('Nitaqat: Please enter a valid headcount (minimum 1 employee)');
+        return false;
+      }
+      if (!nitaqatInputs.sector) {
+        setError('Nitaqat: Please select an economic sector');
+        return false;
+      }
+    }
 
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    // TODO: Validate other pack inputs when implemented (Task 3.0+)
+
+    setError(null);
+    return true;
   };
 
   /**
@@ -288,17 +299,122 @@ export default function RunPage() {
           </details>
         </Card>
 
-        {/* Pack Inputs (will be populated in Task 2.0+) */}
+        {/* Pack Inputs */}
         {selectedPacks.size > 0 && (
           <Card className="p-6 mb-6">
             <h2 className="text-xl font-semibold text-slate-900 mb-4">
               2. Configure Pack Settings
             </h2>
             <p className="text-sm text-slate-600 mb-4">
-              Pack-specific input forms will appear here (implemented in Task 2.0+)
+              Provide information specific to each compliance pack
             </p>
-            <div className="text-sm text-slate-500 italic">
-              Selected: {Array.from(selectedPacks).map(id => PACKS[id].title).join(', ')}
+
+            <div className="space-y-6">
+              {/* Nitaqat Inputs */}
+              {selectedPacks.has('nitaqat') && (
+                <div className="border border-slate-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-slate-900 mb-3">
+                    Nitaqat (Saudization) Settings
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {/* Sector */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Economic Sector <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={packInputs.nitaqat?.sector as string || 'other'}
+                        onChange={(e) => {
+                          setPackInputs({
+                            ...packInputs,
+                            nitaqat: {
+                              ...(packInputs.nitaqat || {}),
+                              sector: e.target.value,
+                            },
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {AVAILABLE_SECTORS.map(sectorKey => (
+                          <option key={sectorKey} value={sectorKey}>
+                            {getSectorName(sectorKey)}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Select the primary economic sector of your business
+                      </p>
+                    </div>
+
+                    {/* Headcount */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Total Headcount <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={packInputs.nitaqat?.headcount as number || ''}
+                        onChange={(e) => {
+                          setPackInputs({
+                            ...packInputs,
+                            nitaqat: {
+                              ...(packInputs.nitaqat || {}),
+                              headcount: parseInt(e.target.value) || 0,
+                            },
+                          });
+                        }}
+                        placeholder="e.g., 50"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Total number of employees in your company
+                      </p>
+                    </div>
+
+                    {/* Current Saudi Percentage */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Current Saudization Percentage (optional)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={packInputs.nitaqat?.currentSaudiPct as number || ''}
+                        onChange={(e) => {
+                          setPackInputs({
+                            ...packInputs,
+                            nitaqat: {
+                              ...(packInputs.nitaqat || {}),
+                              currentSaudiPct: parseFloat(e.target.value) || undefined,
+                            },
+                          });
+                        }}
+                        placeholder="e.g., 25.5"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Current % of Saudi employees: (Saudi employees / Total employees) × 100
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ZATCA Inputs (placeholder for Task 3.0) */}
+              {selectedPacks.has('zatca_phase2') && (
+                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                  <h3 className="font-semibold text-slate-700 mb-2">
+                    ZATCA e-Invoicing Phase 2 Settings
+                  </h3>
+                  <p className="text-sm text-slate-500 italic">
+                    Input form will be implemented in Task 3.0
+                  </p>
+                </div>
+              )}
             </div>
           </Card>
         )}

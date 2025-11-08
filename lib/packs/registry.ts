@@ -4,23 +4,14 @@
  */
 
 import { PolicyPack, PackId } from './types';
+import { NitaqatPack } from './nitaqat';
 
 /**
  * Registry of all available policy packs
  * Initially contains placeholders; actual implementations added in subsequent tasks
  */
 export const PACKS: Record<PackId, PolicyPack> = {
-  nitaqat: {
-    id: 'nitaqat',
-    title: 'Nitaqat (Saudization)',
-    version: 'v2025.10',
-    description: 'Saudi workforce localization requirements and compliance',
-    inputsSchema: {} as never, // Will be implemented in Task 2.0
-    analyze: async () => {
-      throw new Error('Nitaqat pack not yet implemented');
-    },
-    score: () => 0,
-  },
+  nitaqat: NitaqatPack,
   zatca_phase2: {
     id: 'zatca_phase2',
     title: 'ZATCA e-Invoicing Phase 2',

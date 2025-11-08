@@ -1,0 +1,314 @@
+{
+  "version": "v2025.10",
+  "effectiveDate": "2025-01-01",
+  "description": "Nitaqat (Saudization) target percentages by sector and company size",
+  "sectors": {
+    "retail": {
+      "name": "Retail Trade",
+      "code": "RETAIL",
+      "bands": [
+        {
+          "minHeadcount": 1,
+          "maxHeadcount": 9,
+          "red": { "min": 0, "max": 10 },
+          "yellow": { "min": 10, "max": 20 },
+          "green": { "min": 20, "max": 35 },
+          "platinum": { "min": 35, "max": 100 },
+          "targetMin": 20
+        },
+        {
+          "minHeadcount": 10,
+          "maxHeadcount": 49,
+          "red": { "min": 0, "max": 15 },
+          "yellow": { "min": 15, "max": 25 },
+          "green": { "min": 25, "max": 40 },
+          "platinum": { "min": 40, "max": 100 },
+          "targetMin": 25
+        },
+        {
+          "minHeadcount": 50,
+          "maxHeadcount": 499,
+          "red": { "min": 0, "max": 20 },
+          "yellow": { "min": 20, "max": 30 },
+          "green": { "min": 30, "max": 45 },
+          "platinum": { "min": 45, "max": 100 },
+          "targetMin": 30
+        },
+        {
+          "minHeadcount": 500,
+          "maxHeadcount": 2999,
+          "red": { "min": 0, "max": 25 },
+          "yellow": { "min": 25, "max": 35 },
+          "green": { "min": 35, "max": 50 },
+          "platinum": { "min": 50, "max": 100 },
+          "targetMin": 35
+        },
+        {
+          "minHeadcount": 3000,
+          "maxHeadcount": 999999,
+          "red": { "min": 0, "max": 30 },
+          "yellow": { "min": 30, "max": 40 },
+          "green": { "min": 40, "max": 55 },
+          "platinum": { "min": 55, "max": 100 },
+          "targetMin": 40
+        }
+      ]
+    },
+    "construction": {
+      "name": "Construction & Contracting",
+      "code": "CONSTRUCTION",
+      "bands": [
+        {
+          "minHeadcount": 1,
+          "maxHeadcount": 9,
+          "red": { "min": 0, "max": 5 },
+          "yellow": { "min": 5, "max": 10 },
+          "green": { "min": 10, "max": 20 },
+          "platinum": { "min": 20, "max": 100 },
+          "targetMin": 10
+        },
+        {
+          "minHeadcount": 10,
+          "maxHeadcount": 49,
+          "red": { "min": 0, "max": 8 },
+          "yellow": { "min": 8, "max": 12 },
+          "green": { "min": 12, "max": 22 },
+          "platinum": { "min": 22, "max": 100 },
+          "targetMin": 12
+        },
+        {
+          "minHeadcount": 50,
+          "maxHeadcount": 499,
+          "red": { "min": 0, "max": 10 },
+          "yellow": { "min": 10, "max": 15 },
+          "green": { "min": 15, "max": 25 },
+          "platinum": { "min": 25, "max": 100 },
+          "targetMin": 15
+        },
+        {
+          "minHeadcount": 500,
+          "maxHeadcount": 2999,
+          "red": { "min": 0, "max": 12 },
+          "yellow": { "min": 12, "max": 18 },
+          "green": { "min": 18, "max": 28 },
+          "platinum": { "min": 28, "max": 100 },
+          "targetMin": 18
+        },
+        {
+          "minHeadcount": 3000,
+          "maxHeadcount": 999999,
+          "red": { "min": 0, "max": 15 },
+          "yellow": { "min": 15, "max": 20 },
+          "green": { "min": 20, "max": 30 },
+          "platinum": { "min": 30, "max": 100 },
+          "targetMin": 20
+        }
+      ]
+    },
+    "information_technology": {
+      "name": "Information Technology",
+      "code": "IT",
+      "bands": [
+        {
+          "minHeadcount": 1,
+          "maxHeadcount": 9,
+          "red": { "min": 0, "max": 8 },
+          "yellow": { "min": 8, "max": 15 },
+          "green": { "min": 15, "max": 30 },
+          "platinum": { "min": 30, "max": 100 },
+          "targetMin": 15
+        },
+        {
+          "minHeadcount": 10,
+          "maxHeadcount": 49,
+          "red": { "min": 0, "max": 12 },
+          "yellow": { "min": 12, "max": 20 },
+          "green": { "min": 20, "max": 35 },
+          "platinum": { "min": 35, "max": 100 },
+          "targetMin": 20
+        },
+        {
+          "minHeadcount": 50,
+          "maxHeadcount": 499,
+          "red": { "min": 0, "max": 15 },
+          "yellow": { "min": 15, "max": 25 },
+          "green": { "min": 25, "max": 40 },
+          "platinum": { "min": 40, "max": 100 },
+          "targetMin": 25
+        },
+        {
+          "minHeadcount": 500,
+          "maxHeadcount": 2999,
+          "red": { "min": 0, "max": 18 },
+          "yellow": { "min": 18, "max": 28 },
+          "green": { "min": 28, "max": 43 },
+          "platinum": { "min": 43, "max": 100 },
+          "targetMin": 28
+        },
+        {
+          "minHeadcount": 3000,
+          "maxHeadcount": 999999,
+          "red": { "min": 0, "max": 20 },
+          "yellow": { "min": 20, "max": 30 },
+          "green": { "min": 30, "max": 45 },
+          "platinum": { "min": 45, "max": 100 },
+          "targetMin": 30
+        }
+      ]
+    },
+    "manufacturing": {
+      "name": "Manufacturing",
+      "code": "MANUFACTURING",
+      "bands": [
+        {
+          "minHeadcount": 1,
+          "maxHeadcount": 9,
+          "red": { "min": 0, "max": 7 },
+          "yellow": { "min": 7, "max": 12 },
+          "green": { "min": 12, "max": 25 },
+          "platinum": { "min": 25, "max": 100 },
+          "targetMin": 12
+        },
+        {
+          "minHeadcount": 10,
+          "maxHeadcount": 49,
+          "red": { "min": 0, "max": 10 },
+          "yellow": { "min": 10, "max": 17 },
+          "green": { "min": 17, "max": 30 },
+          "platinum": { "min": 30, "max": 100 },
+          "targetMin": 17
+        },
+        {
+          "minHeadcount": 50,
+          "maxHeadcount": 499,
+          "red": { "min": 0, "max": 12 },
+          "yellow": { "min": 12, "max": 20 },
+          "green": { "min": 20, "max": 35 },
+          "platinum": { "min": 35, "max": 100 },
+          "targetMin": 20
+        },
+        {
+          "minHeadcount": 500,
+          "maxHeadcount": 2999,
+          "red": { "min": 0, "max": 15 },
+          "yellow": { "min": 15, "max": 23 },
+          "green": { "min": 23, "max": 38 },
+          "platinum": { "min": 38, "max": 100 },
+          "targetMin": 23
+        },
+        {
+          "minHeadcount": 3000,
+          "maxHeadcount": 999999,
+          "red": { "min": 0, "max": 18 },
+          "yellow": { "min": 18, "max": 25 },
+          "green": { "min": 25, "max": 40 },
+          "platinum": { "min": 40, "max": 100 },
+          "targetMin": 25
+        }
+      ]
+    },
+    "hospitality": {
+      "name": "Hotels & Restaurants",
+      "code": "HOSPITALITY",
+      "bands": [
+        {
+          "minHeadcount": 1,
+          "maxHeadcount": 9,
+          "red": { "min": 0, "max": 10 },
+          "yellow": { "min": 10, "max": 18 },
+          "green": { "min": 18, "max": 32 },
+          "platinum": { "min": 32, "max": 100 },
+          "targetMin": 18
+        },
+        {
+          "minHeadcount": 10,
+          "maxHeadcount": 49,
+          "red": { "min": 0, "max": 13 },
+          "yellow": { "min": 13, "max": 22 },
+          "green": { "min": 22, "max": 37 },
+          "platinum": { "min": 37, "max": 100 },
+          "targetMin": 22
+        },
+        {
+          "minHeadcount": 50,
+          "maxHeadcount": 499,
+          "red": { "min": 0, "max": 17 },
+          "yellow": { "min": 17, "max": 27 },
+          "green": { "min": 27, "max": 42 },
+          "platinum": { "min": 42, "max": 100 },
+          "targetMin": 27
+        },
+        {
+          "minHeadcount": 500,
+          "maxHeadcount": 2999,
+          "red": { "min": 0, "max": 20 },
+          "yellow": { "min": 20, "max": 30 },
+          "green": { "min": 30, "max": 45 },
+          "platinum": { "min": 45, "max": 100 },
+          "targetMin": 30
+        },
+        {
+          "minHeadcount": 3000,
+          "maxHeadcount": 999999,
+          "red": { "min": 0, "max": 23 },
+          "yellow": { "min": 23, "max": 33 },
+          "green": { "min": 33, "max": 48 },
+          "platinum": { "min": 48, "max": 100 },
+          "targetMin": 33
+        }
+      ]
+    },
+    "other": {
+      "name": "Other Sectors",
+      "code": "OTHER",
+      "bands": [
+        {
+          "minHeadcount": 1,
+          "maxHeadcount": 9,
+          "red": { "min": 0, "max": 10 },
+          "yellow": { "min": 10, "max": 15 },
+          "green": { "min": 15, "max": 25 },
+          "platinum": { "min": 25, "max": 100 },
+          "targetMin": 15
+        },
+        {
+          "minHeadcount": 10,
+          "maxHeadcount": 49,
+          "red": { "min": 0, "max": 12 },
+          "yellow": { "min": 12, "max": 18 },
+          "green": { "min": 18, "max": 28 },
+          "platinum": { "min": 28, "max": 100 },
+          "targetMin": 18
+        },
+        {
+          "minHeadcount": 50,
+          "maxHeadcount": 499,
+          "red": { "min": 0, "max": 15 },
+          "yellow": { "min": 15, "max": 22 },
+          "green": { "min": 22, "max": 32 },
+          "platinum": { "min": 32, "max": 100 },
+          "targetMin": 22
+        },
+        {
+          "minHeadcount": 500,
+          "maxHeadcount": 2999,
+          "red": { "min": 0, "max": 18 },
+          "yellow": { "min": 18, "max": 25 },
+          "green": { "min": 25, "max": 35 },
+          "platinum": { "min": 35, "max": 100 },
+          "targetMin": 25
+        },
+        {
+          "minHeadcount": 3000,
+          "maxHeadcount": 999999,
+          "red": { "min": 0, "max": 20 },
+          "yellow": { "min": 20, "max": 27 },
+          "green": { "min": 27, "max": 37 },
+          "platinum": { "min": 37, "max": 100 },
+          "targetMin": 27
+        }
+      ]
+    }
+  }
+}
+
