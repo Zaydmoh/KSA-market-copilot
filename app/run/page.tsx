@@ -133,7 +133,16 @@ export default function RunPage() {
       }
     }
 
-    // TODO: Validate other pack inputs when implemented (Task 3.0+)
+    // Validate ZATCA Phase 2 inputs
+    if (selectedPacks.has('zatca_phase2')) {
+      const zatcaInputs = packInputs.zatca_phase2 as { erp?: string } | undefined;
+      if (!zatcaInputs?.erp || zatcaInputs.erp.trim().length === 0) {
+        setError('ZATCA: Please enter your ERP system name');
+        return false;
+      }
+    }
+
+    // TODO: Validate other pack inputs when implemented (Task 4.0+)
 
     setError(null);
     return true;
@@ -404,15 +413,180 @@ export default function RunPage() {
                 </div>
               )}
 
-              {/* ZATCA Inputs (placeholder for Task 3.0) */}
+              {/* ZATCA Inputs */}
               {selectedPacks.has('zatca_phase2') && (
-                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-                  <h3 className="font-semibold text-slate-700 mb-2">
+                <div className="border border-slate-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-slate-900 mb-3">
                     ZATCA e-Invoicing Phase 2 Settings
                   </h3>
-                  <p className="text-sm text-slate-500 italic">
-                    Input form will be implemented in Task 3.0
-                  </p>
+                  
+                  <div className="space-y-4">
+                    {/* ERP System */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        ERP System <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={(packInputs.zatca_phase2 as { erp?: string })?.erp || ''}
+                        onChange={(e) => {
+                          setPackInputs({
+                            ...packInputs,
+                            zatca_phase2: {
+                              ...(packInputs.zatca_phase2 || {}),
+                              erp: e.target.value,
+                            },
+                          });
+                        }}
+                        placeholder="e.g., SAP, Oracle, Odoo, QuickBooks"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Name of your accounting/ERP software
+                      </p>
+                    </div>
+
+                    {/* Current Invoice Format */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Current Invoice Format
+                      </label>
+                      <select
+                        value={(packInputs.zatca_phase2 as { format?: string })?.format || 'Other'}
+                        onChange={(e) => {
+                          setPackInputs({
+                            ...packInputs,
+                            zatca_phase2: {
+                              ...(packInputs.zatca_phase2 || {}),
+                              format: e.target.value,
+                            },
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="PDF">PDF</option>
+                        <option value="XML">XML</option>
+                        <option value="UBL">UBL</option>
+                        <option value="CSV">CSV</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Format you currently use for invoices
+                      </p>
+                    </div>
+
+                    {/* API Capable */}
+                    <div>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={(packInputs.zatca_phase2 as { apiCapable?: boolean })?.apiCapable || false}
+                          onChange={(e) => {
+                            setPackInputs({
+                              ...packInputs,
+                              zatca_phase2: {
+                                ...(packInputs.zatca_phase2 || {}),
+                                apiCapable: e.target.checked,
+                              },
+                            });
+                          }}
+                          className="mt-1 h-4 w-4 text-blue-600 rounded"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-slate-700">
+                            ERP supports API integration
+                          </span>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Can your ERP make API calls to external systems?
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Can Export Invoices */}
+                    <div>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={(packInputs.zatca_phase2 as { exportInvoices?: boolean })?.exportInvoices || false}
+                          onChange={(e) => {
+                            setPackInputs({
+                              ...packInputs,
+                              zatca_phase2: {
+                                ...(packInputs.zatca_phase2 || {}),
+                                exportInvoices: e.target.checked,
+                              },
+                            });
+                          }}
+                          className="mt-1 h-4 w-4 text-blue-600 rounded"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-slate-700">
+                            Can export invoice data
+                          </span>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Does your ERP allow exporting invoice data (XML, CSV, etc.)?
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* B2B Percentage */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        B2B Transaction Percentage (optional)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={(packInputs.zatca_phase2 as { b2bPct?: number })?.b2bPct || ''}
+                        onChange={(e) => {
+                          setPackInputs({
+                            ...packInputs,
+                            zatca_phase2: {
+                              ...(packInputs.zatca_phase2 || {}),
+                              b2bPct: parseFloat(e.target.value) || undefined,
+                            },
+                          });
+                        }}
+                        placeholder="e.g., 60"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Approximate % of invoices issued to other businesses (vs consumers)
+                      </p>
+                    </div>
+
+                    {/* PEPPOL */}
+                    <div>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={(packInputs.zatca_phase2 as { peppol?: boolean })?.peppol || false}
+                          onChange={(e) => {
+                            setPackInputs({
+                              ...packInputs,
+                              zatca_phase2: {
+                                ...(packInputs.zatca_phase2 || {}),
+                                peppol: e.target.checked,
+                              },
+                            });
+                          }}
+                          className="mt-1 h-4 w-4 text-blue-600 rounded"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-slate-700">
+                            Need PEPPOL network access
+                          </span>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            For international B2B e-invoicing (EU suppliers/customers)
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

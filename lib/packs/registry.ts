@@ -5,6 +5,7 @@
 
 import { PolicyPack, PackId } from './types';
 import { NitaqatPack } from './nitaqat';
+import { ZATCAPhase2Pack } from './zatca_phase2';
 
 /**
  * Registry of all available policy packs
@@ -12,17 +13,7 @@ import { NitaqatPack } from './nitaqat';
  */
 export const PACKS: Record<PackId, PolicyPack> = {
   nitaqat: NitaqatPack,
-  zatca_phase2: {
-    id: 'zatca_phase2',
-    title: 'ZATCA e-Invoicing Phase 2',
-    version: 'v2025.10',
-    description: 'ZATCA Phase 2 e-invoicing integration and compliance',
-    inputsSchema: {} as never, // Will be implemented in Task 3.0
-    analyze: async () => {
-      throw new Error('ZATCA Phase 2 pack not yet implemented');
-    },
-    score: () => 0,
-  },
+  zatca_phase2: ZATCAPhase2Pack,
   pdpl: {
     id: 'pdpl',
     title: 'PDPL & Data Residency',
