@@ -1,0 +1,83 @@
+# ZATCA e-Invoicing Phase 2 Knowledge Base Sources
+# Version: v2025.10
+
+pack_id: zatca_phase2
+version: v2025.10
+
+sources:
+  - reg_code: ZATCA_EINVOICE_REG
+    title: "E-invoicing Regulation EN"
+    url: "https://zatca.gov.sa/en/E-Invoicing/Pages/default.aspx"
+    storage_url: "supabase://bucket/zatca/E-invoicing_Regulation_EN.pdf"
+    published_on: "2023-12-04"
+    retrieved_on: "2025-10-01"
+    files:
+      - regulations/e-invoicing-regulation.md
+    description: "Official ZATCA e-invoicing regulation covering Phase 1 and Phase 2 requirements"
+
+  - reg_code: ZATCA_PHASE2_IMPL
+    title: "E-Invoicing Phase 2 Implementation Resolution"
+    url: "https://zatca.gov.sa/en/E-Invoicing/IntroductionE-Invoicing/Pages/What-is-e-invoicing.aspx"
+    storage_url: "supabase://bucket/zatca/20230519_E-Invoicing_Implementation_Resolution_English.pdf"
+    published_on: "2023-05-19"
+    retrieved_on: "2025-10-01"
+    files:
+      - regulations/phase2-implementation.md
+    description: "Implementation resolution for ZATCA Phase 2 including timeline and technical requirements"
+
+  - reg_code: ZATCA_DETAILED_GUIDE
+    title: "E-Invoicing Detailed Guideline"
+    url: "https://zatca.gov.sa/en/E-Invoicing/Guidelines/Pages/default.aspx"
+    storage_url: "supabase://bucket/zatca/e-invoicing_detailed_guideline.pdf"
+    published_on: "2023-06-15"
+    retrieved_on: "2025-10-01"
+    files:
+      - guidelines/detailed-guideline.md
+    description: "Comprehensive guideline covering technical specifications, UBL format, QR codes, and integration"
+
+  - reg_code: ZATCA_API_SPEC
+    title: "ZATCA API Specification"
+    url: "https://zatca.gov.sa/en/E-Invoicing/SystemsDevelopers/Pages/TechnicalRequirements.aspx"
+    storage_url: "supabase://bucket/zatca/api-specification.pdf"
+    published_on: "2023-07-01"
+    retrieved_on: "2025-10-01"
+    files:
+      - guidelines/api-specification.md
+    description: "API endpoints for clearance (B2B) and reporting (B2C), authentication, and error handling"
+
+  - reg_code: ZATCA_UBL_STANDARD
+    title: "UBL 2.1 Implementation Guide"
+    url: "https://zatca.gov.sa/en/E-Invoicing/SystemsDevelopers/Pages/UBL.aspx"
+    storage_url: "supabase://bucket/zatca/ubl-implementation.pdf"
+    published_on: "2023-06-20"
+    retrieved_on: "2025-10-01"
+    files:
+      - guidelines/ubl-implementation.md
+    description: "UBL 2.1 XML format requirements, field mappings, and validation schemas"
+
+  - reg_code: ZATCA_CRYPTO_GUIDE
+    title: "Cryptographic Stamp and Certificate Guide"
+    url: "https://zatca.gov.sa/en/E-Invoicing/SystemsDevelopers/Pages/CryptographicStamp.aspx"
+    storage_url: "supabase://bucket/zatca/crypto-guide.pdf"
+    published_on: "2023-06-25"
+    retrieved_on: "2025-10-01"
+    files:
+      - guidelines/cryptographic-stamp.md
+    description: "Guide for obtaining ZATCA certificates, signing invoices, and HSM requirements"
+
+# NOTE: Markdown files need to be created from the PDFs in sources/ksa/zatca/
+# The files listed above are the target locations where converted markdown should be placed
+# 
+# Original PDFs are located at:
+# - sources/ksa/zatca/regulation/E-invoicing Regulation EN.pdf
+# - sources/ksa/zatca/regulation/20230519_E-Invoicing Implementation Resolution English.pdf
+# - sources/ksa/zatca/guidelines/e-invoicing_detailed_guideline.pdf (if exists)
+#
+# Conversion can be done manually or using PDF-to-markdown tools like:
+# - Adobe Acrobat Export
+# - pandoc
+# - Online converters
+#
+# After conversion, place markdown files in the structure above and run:
+#   tsx lib/kb/ingest.ts --pack zatca_phase2 --version v2025.10
+

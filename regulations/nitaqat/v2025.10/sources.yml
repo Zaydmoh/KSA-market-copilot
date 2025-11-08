@@ -1,0 +1,40 @@
+# Nitaqat (Saudization) Knowledge Base Sources
+# Version: v2025.10
+
+pack_id: nitaqat
+version: v2025.10
+
+sources:
+  - reg_code: NITAQAT_OVERVIEW
+    title: "Nitaqat Program Overview and Requirements"
+    url: "https://hrsd.gov.sa/en/nitaqat"
+    storage_url: "https://storage.example.com/nitaqat/overview.pdf"
+    published_on: "2025-01-15"
+    retrieved_on: "2025-10-01"
+    files:
+      - overview.md
+    description: "Official overview of the Nitaqat Saudization program requirements and classifications"
+
+  - reg_code: NITAQAT_CALC
+    title: "Nitaqat Calculation Methodology and Thresholds"
+    url: "https://hrsd.gov.sa/en/nitaqat/calculator"
+    storage_url: "https://storage.example.com/nitaqat/methodology.pdf"
+    published_on: "2025-01-15"
+    retrieved_on: "2025-10-01"
+    files:
+      - thresholds.md
+      - calculator-guide.md
+    description: "Detailed methodology for calculating Saudization percentages and color band thresholds"
+
+  - reg_code: NITAQAT_COMPLIANCE
+    title: "Nitaqat Compliance Requirements and Penalties"
+    url: "https://hrsd.gov.sa/en/nitaqat/compliance"
+    storage_url: "https://storage.example.com/nitaqat/compliance.pdf"
+    published_on: "2025-01-15"
+    retrieved_on: "2025-10-01"
+    files:
+      - compliance.md
+    description: "Compliance requirements, reporting obligations, and penalties for non-compliance"
+
+# Note: Actual markdown files should be created in this directory
+# For now, we're using the thresholds.json data which has already been created
