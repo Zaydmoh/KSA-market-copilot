@@ -1,12 +1,14 @@
 /**
  * POST /api/run
  * Creates a new analysis run with selected packs
+ * Task 6.0: Database persistence implementation
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PackId, PackStatus } from '@/lib/packs/types';
+import { PackId } from '@/lib/packs/types';
 import { isValidPackId } from '@/lib/packs/registry';
+import { getClient } from '@/lib/kb/db';
 
 // Force Node.js runtime
 export const runtime = 'nodejs';
@@ -16,54 +18,30 @@ export const dynamic = 'force-dynamic';
  * Request schema validation
  */
 const RunRequestSchema = z.object({
-  documentId: z.string().optional(),
+  documentId: z.string().uuid().optional(),
   text: z.string().optional(),
   packs: z.array(z.string()),
   inputs: z.record(z.string(), z.unknown()),
   locale: z.string().optional().default('en'),
+  projectName: z.string().optional(),
 });
 
 /**
- * In-memory storage for analyses (Phase 2.0 - will be replaced with DB in Task 6.0)
- */
-interface AnalysisRecord {
-  analysisId: string;
-  documentId?: string;
-  text?: string;
-  packs: Array<{
-    packId: PackId;
-    status: PackStatus;
-    inputs: unknown;
-    score?: number;
-    outputJson?: unknown;
-    error?: string;
-  }>;
-  locale: string;
-  createdAt: string;
-}
-
-const analyses = new Map<string, AnalysisRecord>();
-
-/**
- * Generate a unique analysis ID
- */
-function generateAnalysisId(): string {
-  return `analysis_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-/**
  * POST /api/run
- * Creates an analysis run with selected packs
+ * Creates an analysis run with selected packs (with DB persistence)
  */
 export async function POST(request: NextRequest) {
+  const client = await getClient();
+  
   try {
-    console.log('Received run request');
+    console.log('[Run] Received run request');
 
     // Parse and validate request body
     const body = await request.json().catch(() => ({}));
     const validation = RunRequestSchema.safeParse(body);
 
     if (!validation.success) {
+      client.release();
       return NextResponse.json(
         {
           success: false,
@@ -77,10 +55,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { documentId, text, packs: packIds, inputs, locale } = validation.data;
+    const { 
+      documentId, 
+      text, 
+      packs: packIds, 
+      inputs, 
+      locale,
+      projectName = 'Default Project'
+    } = validation.data;
 
     // Validate that we have either documentId or text
     if (!documentId && !text) {
+      client.release();
       return NextResponse.json(
         {
           success: false,
@@ -95,6 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Validate that at least one pack is selected
     if (packIds.length === 0) {
+      client.release();
       return NextResponse.json(
         {
           success: false,
@@ -110,6 +97,7 @@ export async function POST(request: NextRequest) {
     // Validate all pack IDs
     const invalidPacks = packIds.filter(id => !isValidPackId(id));
     if (invalidPacks.length > 0) {
+      client.release();
       return NextResponse.json(
         {
           success: false,
@@ -122,26 +110,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create analysis record
-    const analysisId = generateAnalysisId();
-    const analysis: AnalysisRecord = {
-      analysisId,
-      documentId,
-      text,
-      packs: packIds.map(packId => ({
-        packId: packId as PackId,
-        status: 'queued' as PackStatus,
-        inputs: inputs[packId],
-      })),
-      locale,
-      createdAt: new Date().toISOString(),
-    };
+    // Begin transaction
+    await client.query('BEGIN');
 
-    // Store in memory (will be replaced with DB in Task 6.0)
-    analyses.set(analysisId, analysis);
+    // 1. Create or get project
+    const projectResult = await client.query(
+      `INSERT INTO projects (name) 
+       VALUES ($1) 
+       ON CONFLICT DO NOTHING
+       RETURNING project_id`,
+      [projectName]
+    );
+    
+    let projectId;
+    if (projectResult.rows.length > 0) {
+      projectId = projectResult.rows[0].project_id;
+    } else {
+      // Get existing project
+      const existingProject = await client.query(
+        `SELECT project_id FROM projects WHERE name = $1 LIMIT 1`,
+        [projectName]
+      );
+      projectId = existingProject.rows[0].project_id;
+    }
 
-    console.log(`Created analysis run: ${analysisId} with ${packIds.length} pack(s)`);
+    // 2. Create document if text provided (no documentId)
+    let finalDocumentId = documentId;
+    if (!documentId && text) {
+      const docResult = await client.query(
+        `INSERT INTO documents (project_id, filename, extracted_text)
+         VALUES ($1, $2, $3)
+         RETURNING document_id`,
+        [projectId, 'ad-hoc-text', text]
+      );
+      finalDocumentId = docResult.rows[0].document_id;
+    }
 
+    // 3. Create analysis
+    const analysisResult = await client.query(
+      `INSERT INTO analyses (project_id, document_id, status, locale)
+       VALUES ($1, $2, $3, $4)
+       RETURNING analysis_id`,
+      [projectId, finalDocumentId || null, 'queued', locale]
+    );
+    const analysisId = analysisResult.rows[0].analysis_id;
+
+    // 4. Create analysis_packs for each selected pack
+    for (const packId of packIds) {
+      await client.query(
+        `INSERT INTO analysis_packs (analysis_id, pack_id, status, inputs_json)
+         VALUES ($1, $2, $3, $4)`,
+        [analysisId, packId, 'queued', JSON.stringify(inputs[packId] || {})]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    console.log(`[Run] Created analysis: ${analysisId} with ${packIds.length} pack(s)`);
+
+    // 5. Trigger analysis jobs (in a real system, this would queue jobs)
+    // For now, we'll trigger them via client-side polling or separate worker
+    
     // Return success with analysisId
     return NextResponse.json(
       {
@@ -149,12 +178,19 @@ export async function POST(request: NextRequest) {
         data: {
           analysisId,
           packsQueued: packIds.length,
+          documentId: finalDocumentId,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating analysis run:', error);
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('[Run] Rollback failed:', rollbackError);
+    }
+    
+    console.error('[Run] Error creating analysis run:', error);
 
     return NextResponse.json(
       {
@@ -167,11 +203,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  } finally {
+    client.release();
   }
 }
-
-/**
- * Export the analyses map for use by status endpoint
- */
-export { analyses };
 
