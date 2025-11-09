@@ -163,12 +163,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger for kb_sources
+DROP TRIGGER IF EXISTS update_kb_sources_updated_at ON kb_sources;
 CREATE TRIGGER update_kb_sources_updated_at
     BEFORE UPDATE ON kb_sources
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Trigger for projects
+DROP TRIGGER IF EXISTS update_projects_updated_at ON projects;
 CREATE TRIGGER update_projects_updated_at
     BEFORE UPDATE ON projects
     FOR EACH ROW
