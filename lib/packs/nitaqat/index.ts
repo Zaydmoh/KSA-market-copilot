@@ -6,7 +6,6 @@
 import { z } from 'zod';
 import { PolicyPack, PackResult, ChecklistItem, ChecklistItemStatus, CitationRef } from '../types';
 import { calculateBandDetails } from './calc';
-import { searchChunks } from '@/lib/kb/search';
 
 /**
  * Input schema for Nitaqat pack
@@ -28,6 +27,7 @@ export type NitaqatInputs = z.infer<typeof NitaqatInputsSchema>;
 
 /**
  * Fetch citations for a checklist item
+ * Uses dynamic import to avoid bundling server-only code in client
  */
 async function fetchCitations(
   itemKey: string,
@@ -40,6 +40,9 @@ async function fetchCitations(
       console.warn('DATABASE_URL not configured, skipping citation retrieval');
       return [];
     }
+
+    // Dynamic import to avoid bundling pg in client components
+    const { searchChunks } = await import('@/lib/kb/search');
 
     const results = await searchChunks({
       packId: 'nitaqat',
