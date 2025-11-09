@@ -31,8 +31,8 @@ export async function getPool(): Promise<import('pg').Pool> {
     connectionString,
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000, // Increased to 10 seconds for Supabase
-    ssl: { rejectUnauthorized: false }, // Supabase requires SSL in all environments
+    connectionTimeoutMillis: 15000, // 15 seconds for remote Supabase connections
+    ssl: true, // Supabase uses trusted certs
   });
   
   _pool.on('error', (err) => {
