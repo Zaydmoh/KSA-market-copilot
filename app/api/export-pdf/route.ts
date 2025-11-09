@@ -3,6 +3,9 @@ import { generateReportPDF } from '@/lib/pdf-generator';
 import type { AnalysisResult } from '@/lib/types';
 import { z } from 'zod';
 
+// Force Node.js runtime for PDF generation
+export const runtime = 'nodejs';
+
 // Zod schemas for validation
 const ComplianceItemSchema = z.object({
   requirement: z.string(),
