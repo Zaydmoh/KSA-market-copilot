@@ -10,7 +10,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { PACKS } from '@/lib/packs/registry';
+import { PACK_METADATA } from '@/lib/packs/client-registry';
 import PackChecklist from '@/components/PackChecklist';
 import { PackResult } from '@/lib/packs/types';
 
@@ -209,7 +209,7 @@ export default function AnalysisResultsPageV2() {
   }
 
   const selectedPack = status.packs.find((p) => p.packId === selectedPackId);
-  const selectedPackInfo = selectedPack ? PACKS[selectedPack.packId as keyof typeof PACKS] : null;
+  const selectedPackInfo = selectedPack ? PACK_METADATA[selectedPack.packId as keyof typeof PACK_METADATA] : null;
   const selectedPackDetail = selectedPack ? packDetails[selectedPack.analysisPackId] : null;
 
   // Calculate overall score
@@ -291,7 +291,7 @@ export default function AnalysisResultsPageV2() {
           <div className="border-b border-slate-200 px-6">
             <div className="flex gap-4 overflow-x-auto">
               {status.packs.map((pack) => {
-                const packInfo = PACKS[pack.packId as keyof typeof PACKS];
+                const packInfo = PACK_METADATA[pack.packId as keyof typeof PACK_METADATA];
                 const isSelected = selectedPackId === pack.packId;
 
                 return (

@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import FileUpload from '@/components/FileUpload';
-import { PACKS } from '@/lib/packs/registry';
+import { PACK_METADATA } from '@/lib/packs/client-registry';
 import { PackId } from '@/lib/packs/types';
 import { AVAILABLE_SECTORS, getSectorName } from '@/lib/packs/nitaqat/calc';
 
@@ -231,7 +231,7 @@ export default function RunPage() {
           {/* Priority Packs */}
           <div className="space-y-3 mb-4">
             {priorityPackIds.map(packId => {
-              const pack = PACKS[packId];
+              const pack = PACK_METADATA[packId];
               const isSelected = selectedPacks.has(packId);
               
               return (
@@ -276,7 +276,7 @@ export default function RunPage() {
             </summary>
             <div className="space-y-3 pl-4 border-l-2 border-slate-200">
               {otherPackIds.map(packId => {
-                const pack = PACKS[packId];
+                const pack = PACK_METADATA[packId];
                 
                 return (
                   <div
@@ -611,6 +611,52 @@ export default function RunPage() {
             </div>
           )}
         </Card>
+
+        {/* Debug Info - Show why button might be disabled */}
+        {(selectedPacks.size === 0 || !extractedText || isProcessing) && (
+          <Card className="p-4 mb-6 bg-blue-50 border-blue-200">
+            <div className="text-xs text-blue-900">
+              <div className="font-semibold mb-2">Ready to Start Analysis?</div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {selectedPacks.size > 0 ? '✓' : '○'} 
+                  <span className={selectedPacks.size > 0 ? 'text-green-700' : 'text-blue-600'}>
+                    Pack selected: {selectedPacks.size > 0 ? `${selectedPacks.size} pack(s)` : 'None (select at least 1)'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {extractedText ? '✓' : '○'} 
+                  <span className={extractedText ? 'text-green-700' : 'text-blue-600'}>
+                    Document uploaded: {extractedText ? `Yes (${extractedText.length.toLocaleString()} chars)` : 'No (upload a PDF)'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!isProcessing ? '✓' : '○'} 
+                  <span className={!isProcessing ? 'text-green-700' : 'text-blue-600'}>
+                    Ready to process: {isProcessing ? 'Processing...' : 'Yes'}
+                  </span>
+                </div>
+                {/* Show pack-specific validation hints */}
+                {selectedPacks.has('nitaqat') && (
+                  <div className="flex items-center gap-2 ml-4">
+                    {packInputs.nitaqat?.headcount ? '✓' : '○'}
+                    <span className={packInputs.nitaqat?.headcount ? 'text-green-700' : 'text-orange-600'}>
+                      Nitaqat: Headcount {packInputs.nitaqat?.headcount ? 'provided' : 'required'}
+                    </span>
+                  </div>
+                )}
+                {selectedPacks.has('zatca_phase2') && (
+                  <div className="flex items-center gap-2 ml-4">
+                    {packInputs.zatca_phase2?.erp ? '✓' : '○'}
+                    <span className={packInputs.zatca_phase2?.erp ? 'text-green-700' : 'text-orange-600'}>
+                      ZATCA: ERP system {packInputs.zatca_phase2?.erp ? 'provided' : 'required'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
