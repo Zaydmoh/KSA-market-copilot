@@ -1,8 +1,10 @@
 /**
  * KB Search Utilities
  * Semantic search over knowledge base using vector similarity
+ * SERVER-ONLY: This module must never be imported by client components
  */
 
+import 'server-only';
 import OpenAI from 'openai';
 import { query as dbQuery } from './db';
 

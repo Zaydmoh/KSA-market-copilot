@@ -1,11 +1,12 @@
 /**
  * Phase 2: Policy Pack Registry
  * Central registry for all available packs
+ * CLIENT-SAFE: Can be imported by client components
  */
 
 import { PolicyPack, PackId } from './types';
-import { NitaqatPack } from './nitaqat';
-import { ZATCAPhase2Pack } from './zatca_phase2';
+import { NitaqatPack } from './nitaqat/index';
+import { ZATCAPhase2Pack } from './zatca_phase2/index';
 
 /**
  * Registry of all available policy packs
