@@ -73,6 +73,7 @@ export default function RunPage() {
    * Handle file selection and extraction
    */
   const handleFileSelect = async (file: File) => {
+    console.log('[Run] File selected:', file.name, file.size, 'bytes');
     setSelectedFile(file);
     setError(null);
     setIsProcessing(true);
@@ -82,21 +83,35 @@ export default function RunPage() {
       const formData = new FormData();
       formData.append('file', file);
 
+      console.log('[Run] Calling /api/extract...');
       const response = await fetch('/api/extract', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('[Run] Extract response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('[Run] Extract error response:', errorData);
         throw new Error(errorData.error?.message || 'Failed to extract PDF text');
       }
 
       const data = await response.json();
-      setExtractedText(data.text || '');
-      console.log(`Extracted ${data.text?.length || 0} characters from PDF`);
+      console.log('[Run] Extract response data:', {
+        hasText: !!data.text,
+        textLength: data.text?.length || 0,
+        keys: Object.keys(data)
+      });
+
+      if (!data.text || data.text.length === 0) {
+        throw new Error('PDF extraction returned empty text. The PDF might be scanned images without OCR.');
+      }
+
+      setExtractedText(data.text);
+      console.log(`[Run] ✓ Extracted ${data.text.length} characters from PDF`);
     } catch (err) {
-      console.error('Extraction error:', err);
+      console.error('[Run] Extraction error:', err);
       setError(err instanceof Error ? err.message : 'Failed to extract PDF text');
       setExtractedText(null);
     } finally {
