@@ -180,34 +180,6 @@ export default function AnalysisResultsPageV2() {
     alert('PDF export coming soon!');
   };
 
-  /**
-   * Download evidence list
-   */
-  const handleDownloadEvidence = async () => {
-    if (!analysisId) return;
-
-    try {
-      const response = await fetch(`/api/evidence?analysisId=${analysisId}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate evidence list');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `evidence-required-${analysisId.substring(0, 8)}.md`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('[Results] Failed to download evidence:', error);
-      alert('Failed to download evidence list. Please try again.');
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -269,14 +241,11 @@ export default function AnalysisResultsPageV2() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={handleDownloadEvidence}>
-                📋 Evidence List
-              </Button>
               <Button variant="outline" onClick={handleExport}>
-                📄 Export PDF
+                Export PDF
               </Button>
               <Button variant="outline" onClick={() => router.push('/run')}>
-                ➕ New Analysis
+                New Analysis
               </Button>
             </div>
           </div>
