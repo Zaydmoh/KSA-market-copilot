@@ -70,6 +70,44 @@ export default function RunPage() {
   // };
 
   /**
+   * Poll for async extraction result
+   */
+  const pollForExtraction = async (hash: string, maxAttempts = 30): Promise<string> => {
+    console.log('[Run] Starting polling for hash:', hash);
+    
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s between polls
+      
+      console.log(`[Run] Polling attempt ${i + 1}/${maxAttempts}...`);
+      const response = await fetch(`/api/extract?hash=${encodeURIComponent(hash)}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || 'Polling failed');
+      }
+      
+      const data = await response.json();
+      console.log(`[Run] Poll response:`, {
+        status: data.status,
+        hasText: !!data.text,
+        textLength: data.text?.length || 0
+      });
+      
+      if (data.status === 'completed' && data.text) {
+        return data.text;
+      }
+      
+      if (data.status === 'failed') {
+        throw new Error('PDF extraction failed on server');
+      }
+      
+      // Continue polling if status is 'processing'
+    }
+    
+    throw new Error('Extraction timed out after 60 seconds');
+  };
+
+  /**
    * Handle file selection and extraction
    */
   const handleFileSelect = async (file: File) => {
@@ -100,16 +138,41 @@ export default function RunPage() {
       const data = await response.json();
       console.log('[Run] Extract response data:', {
         hasText: !!data.text,
+        hasHash: !!data.hash,
+        status: data.status,
         textLength: data.text?.length || 0,
         keys: Object.keys(data)
       });
 
-      if (!data.text || data.text.length === 0) {
-        throw new Error('PDF extraction returned empty text. The PDF might be scanned images without OCR.');
+      // Case 1: Immediate text response (simple PDFs)
+      if (data.text && data.text.length > 0) {
+        setExtractedText(data.text);
+        console.log(`[Run] ✓ Extracted ${data.text.length} characters from PDF (immediate)`);
+        return;
       }
 
-      setExtractedText(data.text);
-      console.log(`[Run] ✓ Extracted ${data.text.length} characters from PDF`);
+      // Case 2: Async processing with hash (complex PDFs)
+      if (data.hash || data.status === 'processing') {
+        const hash = data.hash || data.whisper_hash;
+        if (!hash) {
+          throw new Error('Server returned processing status but no hash for polling');
+        }
+        
+        console.log('[Run] PDF requires async processing, starting to poll...');
+        const text = await pollForExtraction(hash);
+        
+        if (!text || text.length === 0) {
+          throw new Error('PDF extraction returned empty text. The PDF might be scanned images without OCR.');
+        }
+        
+        setExtractedText(text);
+        console.log(`[Run] ✓ Extracted ${text.length} characters from PDF (async)`);
+        return;
+      }
+
+      // Case 3: Unexpected response
+      throw new Error('Unexpected response from extraction service: no text or hash provided');
+      
     } catch (err) {
       console.error('[Run] Extraction error:', err);
       setError(err instanceof Error ? err.message : 'Failed to extract PDF text');
@@ -618,7 +681,23 @@ export default function RunPage() {
           </p>
           <FileUpload onFileSelect={handleFileSelect} />
           
-          {extractedText && (
+          {isProcessing && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">
+                    Extracting text from PDF...
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    This may take 10-60 seconds for large or complex documents
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {extractedText && !isProcessing && (
             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-900">
                 ✓ Document extracted successfully ({extractedText.length.toLocaleString()} characters)
