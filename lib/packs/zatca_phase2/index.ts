@@ -4,7 +4,8 @@
  */
 
 import { z } from 'zod';
-import { PolicyPack, PackResult, ChecklistItem, ChecklistItemStatus } from '../types';
+import { PolicyPack, PackResult, ChecklistItem, ChecklistItemStatus, CitationRef } from '../types';
+import { searchChunks } from '@/lib/kb/search';
 
 /**
  * Input schema for ZATCA Phase 2 pack
@@ -48,6 +49,44 @@ function inferStatus(detected: boolean, inputHint?: boolean): ChecklistItemStatu
   if (inputHint === false) return 'fail';
   if (detected) return 'pass';
   return 'unknown';
+}
+
+/**
+ * Fetch citations for a checklist item
+ */
+async function fetchCitations(
+  itemKey: string,
+  query: string,
+  k: number = 2
+): Promise<CitationRef[]> {
+  try {
+    // Only fetch if DATABASE_URL is configured
+    if (!process.env.DATABASE_URL) {
+      console.warn('DATABASE_URL not configured, skipping citation retrieval');
+      return [];
+    }
+
+    const results = await searchChunks({
+      packId: 'zatca_phase2',
+      version: 'v2025.10',
+      query,
+      k,
+      minSimilarity: 0.65,
+    });
+
+    return results.map(r => ({
+      chunkId: r.id,
+      regCode: r.regCode,
+      url: r.url || '',
+      article: r.article || undefined,
+      version: 'v2025.10',
+      confidence: r.similarity,
+      publishedOn: undefined,
+    }));
+  } catch (error) {
+    console.error(`Error fetching citations for ${itemKey}:`, error);
+    return [];
+  }
 }
 
 /**
@@ -238,6 +277,17 @@ Steps:
 Not mandatory for ZATCA Phase 2, but valuable for B2B export/import businesses.`,
         citations: [],
       });
+    }
+
+    // Attach citations from KB
+    console.log('Fetching citations for ZATCA Phase 2 checklist items...');
+    for (const item of checklist) {
+      const query = `${item.title} ${item.description}`.substring(0, 500);
+      item.citations = await fetchCitations(item.key, query, 2);
+      
+      if (item.citations.length > 0) {
+        console.log(`✓ Found ${item.citations.length} citation(s) for ${item.key}`);
+      }
     }
 
     // Calculate score
