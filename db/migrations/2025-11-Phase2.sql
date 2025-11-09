@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS kb_sources (
     UNIQUE(pack_id, version, reg_code)
 );
 
-CREATE INDEX idx_kb_sources_pack_version ON kb_sources(pack_id, version);
-CREATE INDEX idx_kb_sources_reg_code ON kb_sources(reg_code);
+CREATE INDEX IF NOT EXISTS idx_kb_sources_pack_version ON kb_sources(pack_id, version);
+CREATE INDEX IF NOT EXISTS idx_kb_sources_reg_code ON kb_sources(reg_code);
 
 COMMENT ON TABLE kb_sources IS 'Metadata for regulation source documents';
 COMMENT ON COLUMN kb_sources.pack_id IS 'Policy pack identifier (nitaqat, zatca_phase2, etc.)';
@@ -55,12 +55,12 @@ CREATE TABLE IF NOT EXISTS kb_chunks (
     CONSTRAINT fk_kb_chunks_source FOREIGN KEY (source_id) REFERENCES kb_sources(source_id)
 );
 
-CREATE INDEX idx_kb_chunks_pack_version ON kb_chunks(pack_id, version);
-CREATE INDEX idx_kb_chunks_source ON kb_chunks(source_id);
-CREATE INDEX idx_kb_chunks_article ON kb_chunks(article) WHERE article IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_kb_chunks_pack_version ON kb_chunks(pack_id, version);
+CREATE INDEX IF NOT EXISTS idx_kb_chunks_source ON kb_chunks(source_id);
+CREATE INDEX IF NOT EXISTS idx_kb_chunks_article ON kb_chunks(article) WHERE article IS NOT NULL;
 
 -- Vector similarity search index (using HNSW for fast approximate search)
-CREATE INDEX idx_kb_chunks_embedding ON kb_chunks 
+CREATE INDEX IF NOT EXISTS idx_kb_chunks_embedding ON kb_chunks 
 USING hnsw (embedding vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS documents (
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_documents_project ON documents(project_id);
+CREATE INDEX IF NOT EXISTS idx_documents_project ON documents(project_id);
 
 -- Analyses (runs)
 CREATE TABLE IF NOT EXISTS analyses (
@@ -110,8 +110,8 @@ CREATE TABLE IF NOT EXISTS analyses (
     CHECK (status IN ('queued', 'processing', 'completed', 'partial', 'failed'))
 );
 
-CREATE INDEX idx_analyses_status ON analyses(status);
-CREATE INDEX idx_analyses_created ON analyses(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analyses_status ON analyses(status);
+CREATE INDEX IF NOT EXISTS idx_analyses_created ON analyses(created_at DESC);
 
 -- Analysis Packs (per-pack results)
 CREATE TABLE IF NOT EXISTS analysis_packs (
@@ -130,9 +130,9 @@ CREATE TABLE IF NOT EXISTS analysis_packs (
     UNIQUE(analysis_id, pack_id)
 );
 
-CREATE INDEX idx_analysis_packs_analysis ON analysis_packs(analysis_id);
-CREATE INDEX idx_analysis_packs_pack ON analysis_packs(pack_id);
-CREATE INDEX idx_analysis_packs_status ON analysis_packs(status);
+CREATE INDEX IF NOT EXISTS idx_analysis_packs_analysis ON analysis_packs(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_analysis_packs_pack ON analysis_packs(pack_id);
+CREATE INDEX IF NOT EXISTS idx_analysis_packs_status ON analysis_packs(status);
 
 -- Citations (links between checklist items and KB chunks)
 CREATE TABLE IF NOT EXISTS citations (
@@ -146,8 +146,8 @@ CREATE TABLE IF NOT EXISTS citations (
     UNIQUE(analysis_pack_id, checklist_item_key, chunk_id)
 );
 
-CREATE INDEX idx_citations_analysis_pack ON citations(analysis_pack_id);
-CREATE INDEX idx_citations_chunk ON citations(chunk_id);
+CREATE INDEX IF NOT EXISTS idx_citations_analysis_pack ON citations(analysis_pack_id);
+CREATE INDEX IF NOT EXISTS idx_citations_chunk ON citations(chunk_id);
 
 -- ============================================================================
 -- HELPER FUNCTIONS
