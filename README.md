@@ -107,6 +107,20 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. You should 
 
 ---
 
+## 🗄️ Database
+
+- The app uses **Neon** (serverless PostgreSQL with pooled connections) via the `DATABASE_URL` defined in `.env.local`.
+- No custom SSL certificates are required because Neon relies on trusted public certificate authorities.
+- Quick connectivity test:
+
+```bash
+psql "$DATABASE_URL" -c "select 1"
+```
+
+If this command succeeds, you are ready to run migrations or the app locally.
+
+---
+
 ## 🏃 Running the Application
 
 ### Development Mode

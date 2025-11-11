@@ -6,7 +6,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PackId } from '@/lib/packs/types';
 import { isValidPackId } from '@/lib/packs/registry';
 import { getClient } from '@/lib/kb/db';
 
@@ -113,31 +112,31 @@ export async function POST(request: NextRequest) {
     // Begin transaction
     await client.query('BEGIN');
 
-    // 1. Create or get project
-    const projectResult = await client.query(
-      `INSERT INTO projects (name) 
-       VALUES ($1) 
-       ON CONFLICT DO NOTHING
-       RETURNING project_id`,
-      [projectName]
-    );
-    
-    let projectId;
-    if (projectResult.rows.length > 0) {
-      projectId = projectResult.rows[0].project_id;
-    } else {
-      // Get existing project
-      const existingProject = await client.query(
-        `SELECT project_id FROM projects WHERE name = $1 LIMIT 1`,
-        [projectName]
-      );
-      projectId = existingProject.rows[0].project_id;
-    }
+// 1) Create or get project — insert (do nothing on conflict) then select
+await client.query(
+  `INSERT INTO projects (name)
+   VALUES ($1)
+   ON CONFLICT (name) DO NOTHING`,
+  [projectName]
+);
+
+const sel = await client.query<{ project_id: string }>(
+  `SELECT project_id FROM projects WHERE name = $1 LIMIT 1`,
+  [projectName]
+);
+
+const projectId = sel.rows?.[0]?.project_id;
+if (!projectId) {
+  throw new Error('PROJECT_UPSERT_FAILED: SELECT by name returned no rows');
+}
+
+
+
 
     // 2. Create document if text provided (no documentId)
     let finalDocumentId = documentId;
     if (!documentId && text) {
-      const docResult = await client.query(
+      const docResult = await client.query<{ document_id: string }>(
         `INSERT INTO documents (project_id, filename, extracted_text)
          VALUES ($1, $2, $3)
          RETURNING document_id`,
@@ -147,7 +146,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Create analysis
-    const analysisResult = await client.query(
+    const analysisResult = await client.query<{ analysis_id: string }>(
       `INSERT INTO analyses (project_id, document_id, status, locale)
        VALUES ($1, $2, $3, $4)
        RETURNING analysis_id`,

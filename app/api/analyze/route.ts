@@ -11,6 +11,7 @@ import { PACKS } from '@/lib/packs/registry';
 import { PackId } from '@/lib/packs/types';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes for complex analyses
 
 const AnalyzeRequestSchema = z.object({

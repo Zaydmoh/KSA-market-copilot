@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/kb/db';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 interface ChunkData {
   id: string;

@@ -10,6 +10,7 @@ import { PackResult } from '@/lib/packs/types';
 import { PACKS } from '@/lib/packs/registry';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/evidence?analysisId=<uuid>

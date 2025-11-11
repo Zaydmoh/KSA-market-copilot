@@ -1,75 +1,73 @@
 /**
- * Database Client for KB Operations
- * Requires PostgreSQL with pgvector extension
- * SERVER-ONLY: This module must never be imported by client components
+ * Database Client for KB Operations (Neon serverless)
+ * Uses @neondatabase/serverless over HTTPS/WebSocket (port 443)
+ * SERVER-ONLY
  */
 
 import 'server-only';
 
-// Singleton pool instance
-let _pool: import('pg').Pool | null = null;
+import type { SQLQueryResultRow } from '@neondatabase/serverless';
 
-/**
- * Get or create database connection pool (lazy import)
- */
-export async function getPool(): Promise<import('pg').Pool> {
-  if (_pool) return _pool;
-  
-  // Lazy import pg to ensure it's never bundled in client
-  const { Pool } = await import('pg');
-  
-  const connectionString = process.env.DATABASE_URL;
-  
-  if (!connectionString) {
-    throw new Error(
-      'DATABASE_URL environment variable is required. ' +
-      'Example: postgresql://user:password@localhost:5432/ksa_copilot'
-    );
-  }
-  
-  _pool = new Pool({
-    connectionString,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 15000, // 15 seconds for remote Supabase connections
-    ssl: true, // Supabase uses trusted certs
-  });
-  
-  _pool.on('error', (err) => {
-    console.error('Unexpected database error:', err);
-  });
-  
-  return _pool;
+import { neon, neonConfig } from '@neondatabase/serverless';
+
+neonConfig.fetchConnectionCache = true;
+
+let _sql: ReturnType<typeof neon> | null = null;
+
+function requireUrl() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL not set');
+  return url;
 }
 
-/**
- * Close database pool
- */
+async function getSql() {
+  if (_sql) return _sql;
+  _sql = neon(requireUrl(), { fetchConnectionCache: true });
+  return _sql;
+}
+
+/** run a text query with params (pg-like signature) */
+export async function query<T = unknown>(text: string, params: unknown[] = []): Promise<T[]> {
+  const sql = await getSql();
+  // neon serverless supports unsafe text + params
+  const res = await sql.unsafe(text, params);
+  return res as unknown as T[];
+}
+
+/** pg-like client shim with .query() and .release() */
+export async function getClient(): Promise<{
+  query: <T = unknown>(text: string, params?: unknown[]) => Promise<{ rows: T[] }>;
+  release: () => void;
+  _releaseSafe: () => void;
+}> {
+  const sql = await getSql();
+  return {
+    async query<T = unknown>(text: string, params: unknown[] = []) {
+      const rows = (await sql.unsafe(text, params)) as unknown as T[];
+      return { rows };
+    },
+    release() {},
+    _releaseSafe() {},
+  };
+}
+
+/** begin/commit/rollback helpers (optional) */
+export async function begin() {
+  const sql = await getSql();
+  await sql`BEGIN`;
+}
+export async function commit() {
+  const sql = await getSql();
+  await sql`COMMIT`;
+}
+export async function rollback() {
+  const sql = await getSql();
+  await sql`ROLLBACK`;
+}
+
+/** closePool no-op (serverless driver manages connections) */
 export async function closePool(): Promise<void> {
-  if (_pool) {
-    await _pool.end();
-    _pool = null;
-  }
-}
-
-/**
- * Execute a query
- */
-export async function query<T = unknown>(
-  text: string,
-  params?: unknown[]
-): Promise<T[]> {
-  const pool = await getPool();
-  const result = await pool.query(text, params);
-  return result.rows as T[];
-}
-
-/**
- * Get a client for transactions
- */
-export async function getClient(): Promise<import('pg').PoolClient> {
-  const pool = await getPool();
-  return pool.connect();
+  _sql = null;
 }
 
 /**
@@ -99,4 +97,3 @@ export async function testConnection(): Promise<boolean> {
     return false;
   }
 }
-
