@@ -12,8 +12,8 @@ This tool helps businesses entering the Saudi Arabian market by:
 - **Including official citations** to MISA regulations
 - **Exporting professional PDF reports** for stakeholder review
 
-**Current Phase**: MVP focusing on MISA licensing only  
-**Future Phases**: Will expand to Saudization, ZATCA, PDPL, SABER, and more
+**Current Phase**: Phase 1 MVP (MISA licensing baseline)  
+**Phase 2 Update**: Policy Packs + RAG citations now available (see below)
 
 ---
 
@@ -26,6 +26,17 @@ This tool helps businesses entering the Saudi Arabian market by:
 - ✅ Line-level citations to MISA regulations
 - ✅ Exportable PDF reports
 - ✅ Professional, responsive UI
+
+### Phase 2 Enhancements
+- ✅ **Policy Pack framework** — toggle multiple regulation packs per analysis run
+- ✅ **Nitaqat (Saudization) pack** — quota calculator, risk scoring, remediation guidance
+- ✅ **ZATCA e-Invoicing Phase 2 pack** — clearance readiness checklist, ERP prompts, archival controls
+- ✅ **PDPL & Data Residency checks** — data inventory prompts, cross-border risk flags, DPO/breach timelines
+- ✅ **SABER / SFDA trade compliance** — HS code wizard, required certificates, implementation steps
+- ✅ **RHQ eligibility quick check** — footprint prompts, pass/fail summary, missing evidence list
+- ✅ **Retrieval-Augmented Generation (RAG)** — versioned Markdown knowledge base, pgvector search, deterministic citations
+- ✅ **Clause-level “View Source” panel** — regulation excerpt, URL, version badge, published date
+- ✅ **Confidence scoring + evidence templates** — trust indicators and ready-to-fill evidence stubs
 
 ### Supported License Types
 - Commercial License (trading, retail, distribution)
@@ -110,6 +121,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. You should 
 ## 🗄️ Database
 
 - The app uses **Neon** (serverless PostgreSQL with pooled connections) via the `DATABASE_URL` defined in `.env.local`.
+- Phase 2 introduces knowledge-base tables (`kb_sources`, `kb_chunks`) plus app entities (`projects`, `documents`, `analyses`, `analysis_packs`, `citations`) to support policy packs and citations.
 - No custom SSL certificates are required because Neon relies on trusted public certificate authorities.
 - Quick connectivity test:
 
@@ -189,6 +201,14 @@ The results page shows:
 - Generates professional PDF with all analysis details
 - Filename format: `misa-analysis-YYYY-MM-DD.pdf`
 
+### Phase 2 Workflow Additions
+
+- When running with Policy Packs, select the desired packs (MISA, Nitaqat, ZATCA, PDPL, SABER/SFDA, RHQ) before uploading.
+- Pack-specific input forms (e.g., headcount, ERP vendor, data inventory) appear prior to submission.
+- The run orchestrator executes each pack, attaches versioned citations, and streams status updates (extract → analyze → cite).
+- Results page surfaces per-pack tabs with scores, clause-level citations (`reg:PACK:vYYYY.MM §X`), confidence badges, and evidence templates.
+- Multi-pack exports generate a combined PDF (and optional evidence ZIP) with pack metadata and citation references.
+
 ---
 
 ## 🗂️ Project Structure
@@ -197,10 +217,14 @@ The results page shows:
 ksa-market-entry-copilot/
 ├── app/                          # Next.js App Router
 │   ├── api/                      # API routes
-│   │   ├── analyze/              # Main analysis endpoint
-│   │   │   └── route.ts          # POST /api/analyze
+│   │   ├── run/                  # Phase 2 orchestrator (POST /api/run)
+│   │   │   └── route.ts
+│   │   ├── analyze/              # MISA analyzer (Phase 1 baseline, reused per-pack)
+│   │   │   └── route.ts
+│   │   ├── db/health/            # Database connectivity health check
+│   │   │   └── route.ts
 │   │   └── export-pdf/           # PDF export endpoint
-│   │       └── route.ts          # POST /api/export-pdf
+│   │       └── route.ts
 │   ├── results/                  # Results page
 │   │   └── page.tsx              # Analysis results display
 │   ├── layout.tsx                # Root layout
@@ -208,22 +232,29 @@ ksa-market-entry-copilot/
 │   └── globals.css               # Global styles
 ├── components/                   # React components
 │   ├── ui/                       # shadcn/ui components
-│   │   ├── button.tsx            # Button component
-│   │   ├── card.tsx              # Card component
-│   │   └── alert.tsx             # Alert component
+│   ├── packs/                    # Phase 2 pack forms, tabs, view-source panel
 │   ├── ComplianceChecklist.tsx   # Checklist display
 │   ├── CitationsList.tsx         # Citations display
+│   ├── EvidenceTemplates.tsx     # Evidence generator (Phase 2)
 │   ├── FileUpload.tsx            # File upload component
 │   └── LoadingSpinner.tsx        # Loading state
 ├── lib/                          # Utility functions
+│   ├── packs/                    # Pack registry, scoring, prompts
+│   ├── kb/                       # Knowledge base ingestion & retrieval (pgvector)
 │   ├── misa-prompt.ts            # AI prompt builder
 │   ├── openai-client.ts          # OpenAI API wrapper
 │   ├── pdf-extractor.ts          # PDF text extraction
 │   ├── pdf-generator.ts          # PDF report generation
 │   ├── types.ts                  # TypeScript types
 │   └── utils.ts                  # General utilities
-├── regulations/                  # MISA regulations knowledge base
-│   └── misa-licensing.md         # MISA licensing requirements
+├── regulations/                  # Versioned Markdown knowledge base (Phase 2)
+│   ├── misa/
+│   ├── nitaqat/
+│   ├── zatca/
+│   ├── pdpl/
+│   └── saber_sfda/
+├── scripts/                      # DB + KB helpers, migrations, ingestion
+├── sql/                          # Schema migrations & seed data
 ├── .env.local                    # Environment variables (not in Git)
 ├── .env.example                  # Environment template
 ├── package.json                  # Dependencies
@@ -463,16 +494,20 @@ Replace content in `regulations/misa-licensing.md` with official regulations.
 
 ## 🗺️ Roadmap
 
-### Phase 1 (Current - MVP)
+### Phase 1 (Shipped - MVP)
 - ✅ MISA licensing analysis
 - ✅ PDF upload and export
 - ✅ Basic UI
 
-### Phase 2 (Next)
-- [ ] Add Saudization (Nitaqat) requirements
-- [ ] Add ZATCA e-invoicing compliance
-- [ ] Add PDPL (data protection) analysis
-- [ ] Multi-document comparison
+### Phase 2 (In Progress)
+- ✅ Policy Pack framework + toggles
+- ✅ Nitaqat (Saudization) pack
+- ✅ ZATCA e-invoicing Phase 2 readiness pack
+- ✅ PDPL/Data Residency checks (alpha)
+- ✅ SABER/SFDA trade compliance (alpha)
+- ✅ RHQ eligibility quick check
+- ✅ RAG pipeline with clause-level citations & “view source” panel
+- [ ] Multi-document comparison (stretch)
 
 ### Phase 3 (Future)
 - [ ] User accounts and project workspaces
@@ -509,5 +544,5 @@ Built with:
 ---
 
 **Last Updated**: November 2025  
-**Version**: 1.0.0 (Phase 1 MVP)  
+**Version**: 2.0.0 (Phase 2 on top of Phase 1 MVP)  
 **Status**: Production Ready 🚀

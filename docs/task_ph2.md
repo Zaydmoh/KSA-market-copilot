@@ -1,0 +1,166 @@
+## Relevant Files
+
+- `lib/packs/types.ts` – Shared `PolicyPack` interfaces, checklist item types, scoring, citations.
+- `lib/packs/registry.ts` – Central registry mapping `PackId` → pack implementation.
+- `lib/packs/nitaqat/index.ts` – Nitaqat pack (inputs schema, calculator, analyze function).
+- `lib/packs/nitaqat/calc.ts` – Sector/size → target % calculator + banding rules.
+- `lib/packs/zatca_phase2/index.ts` – ZATCA Phase-2 pack (inputs schema, readiness rules, analyze).
+- `lib/packs/common/scoring.ts` – Common scoring helpers (0–100) for packs.
+- `lib/kb/chunk.ts` – Markdown → chunking by headings (with overlap).
+- `lib/kb/ingest.ts` – Ingest `regulations/**/v*/**/*.md` + `sources.yml` → `kb_sources`, `kb_chunks` (with embeddings).
+- `lib/kb/search.ts` – Retrieval utilities (by `pack_id`, `version`, keywords) returning chunks + scores.
+- `app/run/page.tsx` – Run setup UI (select packs, show per-pack inputs, upload).
+- `app/results/[analysisId]/page.tsx` – Results UI with per-pack tabs, scores, checklist, “view source” side panel.
+- `app/results/components/SourcePanel.tsx` – Right-side drawer/panel to display citation chunks.
+- `app/api/run/route.ts` – Creates an analysis run; orchestrates extraction → per-pack analysis queue.
+- `app/api/analyze/route.ts` – Per-pack analysis endpoint; returns normalized JSON + citations.
+- `app/api/kb/search/route.ts` – (Optional) Dev/admin endpoint to test KB queries.
+- `db/migrations/2025-11-Phase2.sql` – Schema for `kb_sources`, `kb_chunks`, `projects`, `documents`, `analyses`, `analysis_packs`, `citations`.
+- `regulations/**/v*/**/*.md` – Versioned Markdown sources (you’ve saved these already).
+- `regulations/**/v*/sources.yml` – Metadata: title, url, storage_url (bucket URL to original PDF), published_on, retrieved_on, reg_code.
+- `regulations/nitaqat/v2025.10/thresholds.json` – Sector/size bands → target % table.
+- `scripts/seed-thresholds.ts` – Validates/seeds Nitaqat thresholds JSON.
+- `scripts/dev-kb-check.ts` – Tiny script to search KB from CLI.
+- `sql/schema.sql` – Bootstrap schema for projects, documents, analyses, analysis packs.
+- `scripts/init_db.ts` – Applies schema using Neon `DATABASE_URL`.
+- `package.json` – Add `db:init` script and ensure required deps.
+
+### Notes
+
+- Tests live beside code files (e.g., `index.test.ts` next to `index.ts`).
+- Use `npx jest` (or your runner) locally; CI optional later.
+- **Where downloads live:** You’ve already saved Markdown under `regulations/**/v*/`. If you also store the *original PDFs*, put them in object storage (e.g., Supabase Storage) and record the `storage_url` inside each `sources.yml`.
+
+## Tasks
+
+- [x] 1.0 Pack Framework & Toggle UI
+  - [x] 1.1 Define core types in `lib/packs/types.ts`
+    - [x] 1.1.1 `PackId`, `Status`, `ChecklistItem`, `CitationRef`, `PackResult`
+    - [x] 1.1.2 Generic `PolicyPack<I, O>` with: `id`, `title`, `version`, `inputsSchema (zod)`, `analyze(docText, inputs)`, `score(o)`, optional `evidenceMap`
+  - [x] 1.2 Create `lib/packs/registry.ts`
+    - [x] 1.2.1 Export typed `PACKS` map (`nitaqat`, `zatca_phase2`, placeholders for `pdpl`, `saber_sfda`, `rhq`)
+    - [x] 1.2.2 Helper `getPack(id: PackId)`
+  - [x] 1.3 Build Run Setup UI `app/run/page.tsx`
+    - [x] 1.3.1 List packs with checkboxes (Nitaqat, ZATCA first)
+    - [x] 1.3.2 Render dynamic Inputs Card from each pack's zod schema (simple fields)
+    - [x] 1.3.3 Validate on submit; highlight missing fields
+  - [x] 1.4 Orchestrate a run
+    - [x] 1.4.1 `POST /api/run` accepts `{ documentId? or text, packs, inputs, locale? }`
+    - [x] 1.4.2 Create rows in `analyses` and `analysis_packs(status='queued')`
+    - [x] 1.4.3 Return `{ analysisId }` and redirect to `/results/[analysisId]`
+  - [x] 1.5 Status endpoint
+    - [x] 1.5.1 `GET /api/run/:analysisId/status` returns per-pack status + progress
+
+- [x] 2.0 Nitaqat (Saudization) Pack
+  - [x] 2.1 Data & calculator
+    - [x] 2.1.1 Create `regulations/nitaqat/v2025.10/thresholds.json` (sector → size bands → `targetSaudiPct`)
+    - [x] 2.1.2 Implement `targetPct(sector, headcount)` in `lib/packs/nitaqat/calc.ts`
+    - [x] 2.1.3 Implement `bandFrom(current, target)` → `red|yellow|green|platinum`
+  - [x] 2.2 Pack implementation `lib/packs/nitaqat/index.ts`
+    - [x] 2.2.1 `inputsSchema`: `{ sector: string; headcount: number; currentSaudiPct?: number }`
+    - [x] 2.2.2 `analyze(docText, inputs)`:
+      - [x] 2.2.2.1 Compute target % and band
+      - [x] 2.2.2.2 Produce 4–6 checklist items (threshold met, monthly monitoring, training plan, reporting cadence, etc.)
+      - [x] 2.2.2.3 Return `PackResult` with normalized items and `packVersion="v2025.10"`
+    - [x] 2.2.3 `score(o)` weighted by criticality
+  - [x] 2.3 Tests
+    - [x] 2.3.1 Calculator edge cases (small/large headcount, unknown sector fallback)
+    - [x] 2.3.2 Analyze returns expected structure & scoring
+
+- [x] 3.0 ZATCA e-Invoicing (Phase 2) Pack
+  - [x] 3.1 Pack implementation `lib/packs/zatca_phase2/index.ts`
+    - [x] 3.1.1 `inputsSchema`: `{ erp: string; apiCapable?: boolean; b2bPct?: number; format?: 'XML'|'UBL'|'CSV'|'PDF'|'Other'; exportInvoices?: boolean; peppol?: boolean }`
+    - [x] 3.1.2 Checklist keys: `UUID`, `QR`, `cryptographicStamp`, `clearanceOrReportingAPI`, `archiving`, `integrationPlan`
+    - [x] 3.1.3 `analyze(docText, inputs)`:
+      - [x] 3.1.3.1 Keyword detection (simple): "UUID", "QR", "stamp", "clearance", "UBL", "XML"
+      - [x] 3.1.3.2 If unclear, do short LLM check with doc excerpt to confirm presence/absence
+      - [x] 3.1.3.3 For missing API/format, add ERP integration prompts
+      - [x] 3.1.3.4 Compute weighted score (critical items heavier)
+  - [x] 3.2 Tests
+    - [x] 3.2.1 Keyword detection sanity
+    - [x] 3.2.2 Structure & scoring
+
+- [x] 4.0 Versioned Knowledge Base (KB) & RAG Infrastructure
+  - [x] 4.1 DB migration `db/migrations/2025-11-Phase2.sql`
+    - [x] 4.1.1 Create `kb_sources(source_id, pack_id, version, title, url, storage_url, published_on, retrieved_on, reg_code, checksum)`
+    - [x] 4.1.2 Create `kb_chunks(id uuid, source_id, pack_id, version, section, article, text, embedding vector)` + indices (`pack_id,version` and vector index)
+  - [x] 4.2 Chunking helper `lib/kb/chunk.ts`
+    - [x] 4.2.1 Parse Markdown by headings; make chunks ≈600–800 tokens with ~80 overlap
+    - [x] 4.2.2 Extract `section` and optional `article` tags from headings
+  - [x] 4.3 Ingestion `lib/kb/ingest.ts`
+    - [x] 4.3.1 Read `regulations/**/v*/sources.yml` → upsert `kb_sources` (include `storage_url` for original PDFs in your bucket)
+    - [x] 4.3.2 Read `regulations/**/v*/**/*.md` (e.g., for **ZATCA you have** `regulations/zatca/v2025.10/regulations/*.md` **and** `regulations/zatca/v2025.10/guidelines/*.md`)
+    - [x] 4.3.3 Chunk → embed → insert rows into `kb_chunks` with `pack_id`, `version`, `reg_code`, `url`, `article/section`
+    - [x] 4.3.4 CLI: `tsx lib/kb/ingest.ts --pack zatca_phase2 --version v2025.10` (repeat for `nitaqat`)
+  - [x] 4.4 Retrieval `lib/kb/search.ts`
+    - [x] 4.4.1 `searchChunks({ packId, version, query, k })` → `{ id, text, reg_code, url, article, score }[]`
+    - [x] 4.4.2 (Optional) mix keyword + vector scores for better precision
+  - [x] 4.5 Dev endpoint (optional)
+    - [x] 4.5.1 `GET /api/kb/search?q=&pack=&version=` to validate retrieval from the browser/Thunder Client
+  - [x] 4.6 (Repo hygiene) Confirm your folder structure is indexed
+    - [x] 4.6.1 ZATCA: both `regulations/` and `guidelines/` subfolders are included in ingestion
+    - [x] 4.6.2 Nitaqat: include `overview.md` + `thresholds.json` (the latter is for calculator, not embedded)
+
+- [x] 5.0 Clause-Level Citations & "View Source" Panel
+  - [x] 5.1 Attach citations in each pack's `analyze`
+    - [x] 5.1.1 Build small per-item queries (keywords + pack inputs)
+    - [x] 5.1.2 Call `searchChunks(packId, packVersion, query, k=2, minSimilarity=0.65)`
+    - [x] 5.1.3 Attach top 1–2 results per item: `{ chunkId, regCode, url, article, confidence }`
+    - [x] 5.1.4 Post-filter: ensure `packId` & `version` match; drop mismatches
+  - [x] 5.2 UI panel `components/CitationPanel.tsx` and `components/PackChecklist.tsx`
+    - [x] 5.2.1 Open from citation badge on checklist items
+    - [x] 5.2.2 Display: chunk text (fetched dynamically), reg code/version, official URL, article/section
+    - [x] 5.2.3 Show confidence badge (e.g., 86%)
+  - [x] 5.3 Report export
+    - [x] 5.3.1 Include citations (reg code, article, link, confidence) under each item in `lib/pdf-generator-ph2.tsx`
+  - [x] 5.4 Tests
+    - [x] 5.4.1 Validate citation structure and confidence ranges in `lib/packs/citations.test.ts`
+    - [x] 5.4.2 Test graceful handling of missing database
+  - [x] 5.5 Citation text API
+    - [x] 5.5.1 `GET /api/citations/[chunkId]` endpoint to fetch full citation text and metadata
+
+- [x] 6.0 Persistence, Reports & QA
+  - [x] 6.1 App data migrations
+    - [x] 6.1.1 `projects`, `documents`, `analyses`, `analysis_packs`, `citations` (FKs, timestamps, indexes)
+  - [x] 6.2 Per-pack analysis endpoint
+    - [x] 6.2.1 `POST /api/analyze`: Runs pack.analyze(), validates inputs, persists results
+    - [x] 6.2.2 Persist `inputs_json`, `output_json`, `score`, and `citations` with transactions
+    - [x] 6.2.3 Update parent analysis status when all packs complete
+    - [x] 6.2.4 `GET /api/analyze?analysisPackId=<uuid>`: Retrieve persisted results
+  - [x] 6.3 Results UI
+    - [x] 6.3.1 Tabs per pack showing **score**, **checklist**, **view source** (citations)
+    - [x] 6.3.2 Show **pack version badge** (e.g., `ZATCA v2025.10`)
+    - [x] 6.3.3 Real-time status polling for in-progress analyses
+    - [x] 6.3.4 Overall score calculation across all packs
+    - [x] 6.3.5 Progress bar with completion percentage
+  - [x] 6.4 Evidence list (MVP)
+    - [x] 6.4.1 Generate markdown of missing items + suggested templates
+    - [x] 6.4.2 API endpoint: GET /api/evidence?analysisId=<uuid>
+    - [x] 6.4.3 Download button in results UI
+    - [x] 6.4.4 Comprehensive templates for Nitaqat and ZATCA Phase 2
+  - [x] 6.5 Golden-set tests
+    - [x] 6.5.1 Test cases for Nitaqat (red band, platinum band)
+    - [x] 6.5.2 Test cases for ZATCA Phase 2 (high readiness, low readiness)
+    - [x] 6.5.3 Verify runtime: ≤ 5 seconds per pack, ≤ 10 seconds for both
+    - [x] 6.5.4 Citation quality tests
+    - [x] 6.5.5 Multi-pack performance tests
+  - [x] 6.6 Telemetry/logging
+    - [x] 6.6.1 Log pack timings, retrieval hit rates, citation coverage %
+    - [x] 6.6.2 Error grouping & basic dashboard (console)
+    - [x] 6.6.3 API endpoint: GET /api/telemetry for monitoring
+    - [x] 6.6.4 Statistics by pack, retrieval quality metrics
+- [ ] 7.0 Database bootstrap tooling
+  - [x] 7.1 Add `sql/schema.sql` with idempotent schema.
+  - [x] 7.2 Create `scripts/init_db.ts` that loads env and applies schema.
+  - [x] 7.3 Ensure dependencies and add `db:init` npm script.
+  - [ ] 7.4 Run `npm run db:init` and capture console output.
+  - [ ] 7.5 Run smoke test POST `/api/run` and capture response/logs.
+- [ ] 8.0 Neon migration cleanup
+  - [x] 8.1 Update `.env.local` and README for Neon.
+  - [x] 8.2 Remove Supabase-specific SSL configuration and artifacts.
+  - [x] 8.3 Align `lib/kb/db.ts` pool helper with Neon settings.
+  - [x] 8.4 Ensure Node runtime + `force-dynamic` exports on DB APIs.
+  - [x] 8.5 Simplify `/api/db/health` for Neon connectivity checks.
+  - [x] 8.6 Confirm schema + init script match Neon requirements.
+  - [x] 8.7 Remove unused Supabase SDK usage (if any).
+  - [ ] 8.8 Restart dev server, apply schema, run health & smoke tests.
